@@ -29,7 +29,7 @@ const loginUser = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    res, json({ success: true, message: error.message });
+    res.json({ success: false, message: error.message });
   }
 };
 
@@ -80,7 +80,7 @@ const registerUser = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res, json({ success: true, message: error.message });
+    res.json({ success: false, message: error.message });
   }
 };
 
