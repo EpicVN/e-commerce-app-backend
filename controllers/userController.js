@@ -4,6 +4,9 @@ import jwt from "jsonwebtoken";
 import validator from "validator";
 
 const createToken = (id) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is not defined in environment variables");
+  }
   return jwt.sign({ id }, process.env.JWT_SECRET);
 };
 
@@ -12,24 +15,34 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email and password are required!" });
+    }
+
     const user = await userModel.findOne({ email });
 
     if (!user) {
-      res.status(400).json({ success: false, message: "User not found!" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found!" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      res.status(400).json({ success: false, message: "Invalid credentials!" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials!" });
     } else {
       const token = createToken(user._id);
 
-      res.json({ success: true, token });
+      return res.status(200).json({ success: true, token });
     }
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -42,18 +55,20 @@ const registerUser = async (req, res) => {
     const userExists = await userModel.findOne({ email });
 
     if (userExists) {
-      res.status(400).json({ success: false, message: "User already exists!" });
+      return res
+        .status(409)
+        .json({ success: false, message: "User already exists!" });
     }
 
     // Validate email format & password
     if (!validator.isEmail(email)) {
-      res
+      return res
         .status(400)
         .json({ success: false, message: "Please enter a valid email" });
     }
 
     if (password.length < 8) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: "Password must be at least 8 characters long",
       });
@@ -74,13 +89,13 @@ const registerUser = async (req, res) => {
 
     const token = createToken(user._id);
 
-    res.json({
+    return res.status(201).json({
       success: true,
       token,
     });
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: error.message });
+    console.log("Register Error: ", error);
+    return res.json({ success: false, message: error.message });
   }
 };
 
@@ -95,13 +110,15 @@ const loginAdmin = async (req, res) => {
     ) {
       const token = createToken(email + password);
 
-      res.json({ success: true, token });
+      return res.status(200).json({ success: true, token });
     } else {
-      res.status(400).json({ success: false, message: "Invalid credentials!" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials!" });
     }
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: error.message });
+    console.log("Login Error: ", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 

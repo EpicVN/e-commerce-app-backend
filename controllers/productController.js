@@ -6,6 +6,9 @@ connectCloudinary();
 // Add product function
 const addProduct = async (req, res) => {
   try {
+    console.log("Received Data:", req.body);
+    console.log("subCategory:", req.body.subCategory);
+
     const {
       name,
       description,
@@ -15,6 +18,10 @@ const addProduct = async (req, res) => {
       sizes,
       bestseller,
     } = req.body;
+
+    if (!name || !description || !price || !category || !subCategory || !sizes || !bestseller) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
 
     const image1 = req.files.image1 && req.files.image1[0];
     const image2 = req.files.image2 && req.files.image2[0];
@@ -42,7 +49,7 @@ const addProduct = async (req, res) => {
       images: imagesUrl,
       category,
       subCategory,
-      sizes: JSON.parse(sizes),
+      sizes: Array.isArray(sizes) ? sizes : JSON.parse(sizes),
       bestseller: bestseller === "true" ? true : false,
       date: Date.now(),
     };
@@ -52,7 +59,7 @@ const addProduct = async (req, res) => {
     const product = new productModel(productData);
     await product.save();
 
-    res.json({ success: true, message: "Product added" });
+    res.json({ success: true, message: "Product Added" });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
@@ -63,7 +70,7 @@ const addProduct = async (req, res) => {
 const removeProduct = async (req, res) => {
   try {
     await productModel.findByIdAndDelete(req.body.id);
-    res.json({ success: true, message: "Product removed!" });
+    res.json({ success: true, message: "Product Removed" });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
