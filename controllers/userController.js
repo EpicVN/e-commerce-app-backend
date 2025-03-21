@@ -95,7 +95,7 @@ const registerUser = async (req, res) => {
     });
   } catch (error) {
     console.log("Register Error: ", error);
-    return res.json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 

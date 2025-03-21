@@ -19,8 +19,18 @@ const addProduct = async (req, res) => {
       bestseller,
     } = req.body;
 
-    if (!name || !description || !price || !category || !subCategory || !sizes || !bestseller) {
-      return res.status(400).json({ success: false, message: "Missing required fields" });
+    if (
+      !name ||
+      !description ||
+      !price ||
+      !category ||
+      !subCategory ||
+      !sizes ||
+      !bestseller
+    ) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields" });
     }
 
     const image1 = req.files.image1 && req.files.image1[0];
@@ -59,21 +69,36 @@ const addProduct = async (req, res) => {
     const product = new productModel(productData);
     await product.save();
 
-    res.json({ success: true, message: "Product Added" });
+    return res.status(200).json({ success: true, message: "Product Added" });
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // Remove product function
 const removeProduct = async (req, res) => {
   try {
-    await productModel.findByIdAndDelete(req.body.id);
-    res.json({ success: true, message: "Product Removed" });
+    const { id } = req.body;
+
+    if (!id) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing product ID" });
+    }
+
+    const product = await productModel.findById(id);
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+
+    await productModel.findByIdAndDelete(id);
+    return res.status(200).json({ success: true, message: "Product Removed" });
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -81,10 +106,10 @@ const removeProduct = async (req, res) => {
 const listProducts = async (req, res) => {
   try {
     const products = await productModel.find({});
-    res.json({ success: true, products });
+    return res.status(200).json({ success: true, products });
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -92,11 +117,25 @@ const listProducts = async (req, res) => {
 const singleProduct = async (req, res) => {
   try {
     const { productId } = req.body;
+
+    if (!productId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing product ID" });
+    }
+
     const product = await productModel.findById(productId);
-    res.json({ success: true, product });
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+
+    return res.status(200).json({ success: true, product });
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
